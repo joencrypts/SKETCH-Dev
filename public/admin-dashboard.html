@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Admin Dashboard</h1>
+            <button onclick="exportToExcel()" class="export-btn">Download as Excel</button>
+        </div>
+        <div class="table-container">
+            <table id="submissionsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Register Number</th>
+                        <th>Date of Birth</th>
+                        <th>Year</th>
+                        <th>Department</th>
+                        <th>Section</th>
+                        <th>Current Domain</th>
+                        <th>Task Based on Domain</th>
+                        <th>Task Chosen</th>
+                        <th>Drive Link</th>
+                        <th>Submission Time</th>
+                    </tr>
+                </thead>
+                <tbody id="submissionsBody">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        // Fetch and display submissions
+        async function loadSubmissions() {
+            try {
+                const response = await fetch('/api/submissions');
+                const submissions = await response.json();
+                const tbody = document.getElementById('submissionsBody');
+                tbody.innerHTML = '';
+
+                submissions.forEach(sub => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${sub.name}</td>
+                        <td>${sub.registerNumber}</td>
+                        <td>${new Date(sub.dob).toLocaleDateString()}</td>
+                        <td>${sub.year}</td>
+                        <td>${sub.department}</td>
+                        <td>${sub.section}</td>
+                        <td>${sub.currentDomain}</td>
+                        <td>${sub.taskBasedOnDomain}</td>
+                        <td>${sub.taskChosen}</td>
+                        <td>
+                            <a href="${sub.driveLink}" target="_blank" rel="noopener noreferrer">
+                                View Submission
+                            </a>
+                        </td>
+                        <td>${new Date(sub.timestamp).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+                alert('Error loading submissions. Please try again.');
+            }
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            window.location.href = '/api/export-xlsx';
+        }
+
+        // Load submissions when page loads
+        document.addEventListener('DOMContentLoaded', loadSubmissions);
+    </script>
+</body>
+</html> 

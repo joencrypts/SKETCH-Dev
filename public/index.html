@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKETCH Task Submission</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SKETCH Task Submission</h1>
+            <a href="/admin" class="admin-btn">Admin Login</a>
+        </div>
+        <form id="submission-form">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="registerNumber">Register Number:</label>
+                <input type="text" id="registerNumber" name="registerNumber" required>
+            </div>
+            <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" name="dob" required 
+                       pattern="\d{4}-\d{2}-\d{2}"
+                       title="Please enter a valid date">
+                <small class="help-text">Format: DD/MM/YYYY</small>
+            </div>
+            <div class="form-group">
+                <label for="year">Year:</label>
+                <select id="year" name="year" required>
+                    <option value="" disabled selected>Select a year</option>
+                    <option value="1st">1st</option>
+                    <option value="2nd">2nd</option>
+                    <option value="3rd">3rd</option>
+                    <option value="4th">4th</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="department">Department:</label>
+                <input type="text" id="department" name="department" required>
+            </div>
+            <div class="form-group">
+                <label for="section">Section:</label>
+                <input type="text" id="section" name="section" required>
+            </div>
+            <div class="form-group">
+                <label for="currentDomain">Current Domain:</label>
+                <select id="currentDomain" name="currentDomain" required>
+                    <option value="" disabled selected>Select your domain</option>
+                    <option value="O&PR">O&PR</option>
+                    <option value="MEDIA">MEDIA</option>
+                    <option value="DESIGN">DESIGN</option>
+                    <option value="MARKETING">MARKETING</option>
+                    <option value="CONTENT">CONTENT</option>
+                    <option value="R&D">R&D</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="taskBasedOnDomain">Task Based on Domain:</label>
+                <select id="taskBasedOnDomain" name="taskBasedOnDomain" required>
+                    <option value="" disabled selected>Select task type</option>
+                    <option value="O&PR">O&PR</option>
+                    <option value="MEDIA">MEDIA</option>
+                    <option value="DESIGN">DESIGN</option>
+                    <option value="MARKETING">MARKETING</option>
+                    <option value="CONTENT">CONTENT</option>
+                    <option value="R&D">R&D</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="taskChosen">Task Chosen:</label>
+                <select id="taskChosen" name="taskChosen" required>
+                    <option value="" disabled selected>Select a task</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="driveLink">Google Drive Link:</label>
+                <input type="url" id="driveLink" name="driveLink" required 
+                       placeholder="https://drive.google.com/..." 
+                       pattern="https://drive\.google\.com/.*"
+                       title="Please enter a valid Google Drive link">
+                <small class="help-text">Upload your work to Google Drive and paste the shared link here</small>
+            </div>
+            <button type="submit" class="submit-btn">Submit Task</button>
+            <div id="success-message" class="success-message" style="display: none;">
+                Thank you for your submission! Your task has been recorded successfully.
+            </div>
+        </form>
+    </div>
+    <script>
+        // Task options for each domain
+        const taskOptions = {
+            'O&PR': [
+                'Plan a big event...',
+                'Create a joint event proposal...'
+            ],
+            'MARKETING': [
+                'Learn about body language...',
+                'Develop a 3-month roadmap...'
+            ],
+            'R&D': [
+                'Identify and learn 1 to 3 new technologies...',
+                'Share your ideas for a hackathon...'
+            ],
+            'MEDIA': [
+                'Create a 30-second reel...',
+                'Develop a reel based on your own idea...'
+            ],
+            'DESIGN': [
+                'Create a carousel post for Texus...',
+                'Design a set of posters...'
+            ],
+            'CONTENT': [
+                'Create a 1-minute Instagram reel...',
+                'Write a script for a reel...'
+            ]
+        };
+
+        // Function to update task options based on selected domain
+        function updateTaskOptions(domain) {
+            const taskSelect = document.getElementById('taskChosen');
+            taskSelect.innerHTML = '<option value="" disabled selected>Select a task</option>';
+            
+            if (domain && taskOptions[domain]) {
+                taskOptions[domain].forEach(task => {
+                    const option = document.createElement('option');
+                    option.value = task;
+                    option.textContent = task;
+                    taskSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Event listener for domain selection
+        document.getElementById('taskBasedOnDomain').addEventListener('change', (e) => {
+            updateTaskOptions(e.target.value);
+        });
+
+        // Form submission handler
+        document.getElementById('submission-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    const successMessage = document.getElementById('success-message');
+                    successMessage.style.display = 'block';
+                    e.target.reset();
+                    document.getElementById('taskChosen').innerHTML = '<option value="" disabled selected>Select a task</option>';
+                    
+                    // Scroll to success message
+                    successMessage.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error submitting task. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting task. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -3,61 +3,31 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
-const cookieParser = require('cookie-parser');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
-app.use(express.static('public'));
-app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Authentication middleware
-const isAuthenticated = (req, res, next) => {
-    const isLoggedIn = req.cookies?.isLoggedIn === 'true';
-    if (isLoggedIn) {
-        next();
-    } else {
-        res.redirect('/login');
-    }
-};
+// Data storage
+const DATA_FILE = 'submissions.json';
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = 'uploads';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Create unique filename with original extension
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({ storage: storage });
-
-// Data storage (in-memory array)
+// Initialize data storage
 let submissions = [];
-
-// Load existing data from JSON file if it exists
-const dataFile = 'submissions.json';
-try {
-    if (fs.existsSync(dataFile)) {
-        const data = fs.readFileSync(dataFile, 'utf8');
-        submissions = JSON.parse(data);
+if (fs.existsSync(DATA_FILE)) {
+    try {
+        submissions = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    } catch (error) {
+        console.error('Error reading submissions file:', error);
     }
-} catch (error) {
-    console.error('Error loading submissions:', error);
 }
 
-// Save submissions to JSON file
+// Save submissions to file
 function saveSubmissions() {
     try {
-        fs.writeFileSync(dataFile, JSON.stringify(submissions, null, 2));
+        fs.writeFileSync(DATA_FILE, JSON.stringify(submissions, null, 2));
     } catch (error) {
         console.error('Error saving submissions:', error);
     }
@@ -65,114 +35,86 @@ function saveSubmissions() {
 
 // Routes
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Protected route - Admin Dashboard
-app.get('/admin-dashboard', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+app.get('/admin-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
 
 // API endpoints
-app.post('/submit-form', upload.single('file'), (req, res) => {
+app.post('/api/submit', (req, res) => {
     try {
         const submission = {
-            name: req.body.name,
-            regNo: req.body.registerNumber,
-            dob: req.body.dob,
-            year: req.body.year,
-            department: req.body.department,
-            section: req.body.section,
-            currentDomain: req.body.currentDomain,
-            taskDomain: req.body.taskBasedOnDomain,
-            task: req.body.taskChosen,
-            uploadedFile: req.file ? req.file.filename : null,
+            id: Date.now().toString(),
+            ...req.body,
             timestamp: new Date().toISOString()
         };
-
         submissions.push(submission);
         saveSubmissions();
-
-        res.json({ 
-            success: true, 
-            message: 'Form submitted successfully',
-            submission 
-        });
+        res.json({ success: true, id: submission.id });
     } catch (error) {
-        console.error('Error submitting form:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error submitting form' 
-        });
+        console.error('Error processing submission:', error);
+        res.status(500).json({ error: 'Failed to process submission' });
     }
 });
 
-// Protected API endpoints
-app.get('/entries', isAuthenticated, (req, res) => {
+app.get('/api/submissions', (req, res) => {
     res.json(submissions);
 });
 
-app.get('/download/:filename', isAuthenticated, (req, res) => {
-    const filename = req.params.filename;
-    const filePath = path.join(__dirname, 'uploads', filename);
-    
-    if (fs.existsSync(filePath)) {
-        res.download(filePath);
-    } else {
-        res.status(404).json({ 
-            success: false, 
-            message: 'File not found' 
-        });
-    }
-});
-
-app.get('/export-xlsx', isAuthenticated, (req, res) => {
+app.get('/api/export-xlsx', (req, res) => {
     try {
         // Create worksheet
         const worksheet = XLSX.utils.json_to_sheet(submissions.map(sub => ({
-            Name: sub.name,
-            'Register Number': sub.regNo,
+            'Name': sub.name,
+            'Register Number': sub.registerNumber,
             'Date of Birth': sub.dob,
-            Year: sub.year,
-            Department: sub.department,
-            Section: sub.section,
+            'Year': sub.year,
+            'Department': sub.department,
+            'Section': sub.section,
             'Current Domain': sub.currentDomain,
-            'Task Domain': sub.taskDomain,
-            Task: sub.task,
-            'Uploaded File': sub.uploadedFile,
-            'Submitted At': new Date(sub.timestamp).toLocaleString()
+            'Task Based on Domain': sub.taskBasedOnDomain,
+            'Task Chosen': sub.taskChosen,
+            'Drive Link': sub.driveLink,
+            'Submission Time': new Date(sub.timestamp).toLocaleString()
         })));
 
         // Create workbook
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Submissions');
 
         // Generate buffer
-        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-        // Set headers
+        // Set headers for file download
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename=submissions.xlsx');
-
+        
         // Send file
-        res.send(excelBuffer);
+        res.send(buffer);
     } catch (error) {
         console.error('Error generating Excel file:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error generating Excel file' 
-        });
+        res.status(500).json({ error: 'Failed to generate Excel file' });
     }
 });
 
-// Logout endpoint
-app.get('/logout', (req, res) => {
-    res.clearCookie('isLoggedIn');
-    res.redirect('/login');
+// Admin authentication middleware
+const adminAuth = (req, res, next) => {
+    const { username, password } = req.body;
+    if (username === 'kanimaa' && password === 'suryaa') {
+        next();
+    } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+    }
+};
+
+app.post('/api/admin/login', adminAuth, (req, res) => {
+    res.json({ success: true });
 });
 
 // Start server

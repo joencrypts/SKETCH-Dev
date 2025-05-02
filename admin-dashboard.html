@@ -3,104 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - SKETCH 2 WEEK ASSESSMENT</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Admin Dashboard - SKETCH Responses</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-            </button>
+<body>
+    <div class="container" data-theme="blue">
+        <div class="theme-switcher">
+            <button onclick="changeTheme('blue')" class="theme-btn" style="background-color: #4169e1;"></button>
+            <button onclick="changeTheme('green')" class="theme-btn" style="background-color: #66B95C;"></button>
+            <button onclick="changeTheme('brown')" class="theme-btn" style="background-color: #ff9800;"></button>
+            <button onclick="changeTheme('pink')" class="theme-btn" style="background-color: #ff5e94;"></button>
+            <button onclick="changeTheme('orange')" class="theme-btn" style="background-color: #fa5b0f;"></button>
+            <button onclick="changeTheme('purple')" class="theme-btn" style="background-color: #9200ee;"></button>
+            <button onclick="changeTheme('sky')" class="theme-btn" style="background-color: #00D4BD;"></button>
+            <button onclick="changeTheme('cadetBlue')" class="theme-btn" style="background-color: #5e9e9f;"></button>
+            <button onclick="changeTheme('crimson')" class="theme-btn" style="background-color: #e54b4b;"></button>
+            <button onclick="changeTheme('olive')" class="theme-btn" style="background-color: #666d41;"></button>
+            <button onclick="changeTheme('red')" class="theme-btn" style="background-color: #fe0000;"></button>
         </div>
 
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-700">Submissions</h2>
-                <button onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                    <i class="fas fa-file-excel mr-2"></i>Export to Excel
-                </button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Register No</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted At</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="submissionsTable" class="divide-y divide-gray-200">
-                        <!-- Submissions will be loaded here -->
-                    </tbody>
-                </table>
-            </div>
+        <div class="dashboard-header">
+            <h1>Admin Dashboard</h1>
+            <button onclick="exportToExcel()" class="export-btn">Download as Excel</button>
+        </div>
+
+        <div class="table-container">
+            <table id="submissionsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Register Number</th>
+                        <th>Date of Birth</th>
+                        <th>Year</th>
+                        <th>Department</th>
+                        <th>Section</th>
+                        <th>Current Domain</th>
+                        <th>Task Based on Domain</th>
+                        <th>Task Chosen</th>
+                        <th>Drive Link</th>
+                    </tr>
+                </thead>
+                <tbody id="submissionsBody">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // Check authentication on page load
-        window.onload = function() {
-            if (!document.cookie.includes('isLoggedIn=true')) {
-                window.location.href = '/login';
+        function changeTheme(theme) {
+            document.querySelector('.container').setAttribute('data-theme', theme);
+        }
+
+        // Fetch submissions data
+        async function fetchSubmissions() {
+            try {
+                const response = await fetch('/api/submissions');
+                const data = await response.json();
+                displaySubmissions(data);
+            } catch (error) {
+                console.error('Error fetching submissions:', error);
             }
-            loadSubmissions();
-        };
-
-        function logout() {
-            fetch('/logout')
-                .then(() => {
-                    window.location.href = '/login';
-                })
-                .catch(error => {
-                    console.error('Error logging out:', error);
-                });
         }
 
-        function loadSubmissions() {
-            fetch('/entries')
-                .then(response => response.json())
-                .then(submissions => {
-                    const tableBody = document.getElementById('submissionsTable');
-                    tableBody.innerHTML = '';
+        // Display submissions in the table
+        function displaySubmissions(submissions) {
+            const tbody = document.getElementById('submissionsBody');
+            tbody.innerHTML = '';
 
-                    submissions.forEach(submission => {
-                        const row = document.createElement('tr');
-                        row.className = 'hover:bg-gray-50';
-                        row.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap">${submission.name}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${submission.regNo}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${submission.department}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${submission.task}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${new Date(submission.timestamp).toLocaleString()}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                ${submission.uploadedFile ? 
-                                    `<button onclick="downloadFile('${submission.uploadedFile}')" class="text-blue-500 hover:text-blue-700">
-                                        <i class="fas fa-download"></i> Download
-                                    </button>` : 
-                                    'No file uploaded'}
-                            </td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading submissions:', error);
-                });
+            submissions.forEach(submission => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${submission.name}</td>
+                    <td>${submission.registerNumber}</td>
+                    <td>${submission.dob}</td>
+                    <td>${submission.year}</td>
+                    <td>${submission.department}</td>
+                    <td>${submission.section}</td>
+                    <td>${submission.currentDomain}</td>
+                    <td>${submission.taskBasedOnDomain}</td>
+                    <td>${submission.taskChosen}</td>
+                    <td><a href="${submission.driveLink}" target="_blank" rel="noopener noreferrer">View File</a></td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
-        function downloadFile(filename) {
-            window.location.href = `/download/${filename}`;
-        }
-
+        // Export to Excel
         function exportToExcel() {
-            window.location.href = '/export-xlsx';
+            window.location.href = '/api/export-xlsx';
         }
+
+        // Load submissions when page loads
+        document.addEventListener('DOMContentLoaded', fetchSubmissions);
     </script>
 </body>
 </html> 

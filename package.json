@@ -1,19 +1,21 @@
 {
-  "name": "sketch-assessment",
+  "name": "sketch-responses",
   "version": "1.0.0",
-  "description": "SKETCH 2 WEEK ASSESSMENT System",
+  "description": "Student Registration Form with File Upload",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "express": "^4.18.2",
+    "express": "^4.21.2",
     "multer": "^1.4.5-lts.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
-  }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
