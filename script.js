@@ -51,12 +51,18 @@ function initClient() {
         clientId: CLIENT_ID,
         discoveryDocs: [DISCOVERY_DOC],
         scope: SCOPES,
-        redirect_uri: REDIRECT_URI
+        redirect_uri: REDIRECT_URI,
+        prompt: 'select_account consent'  // Force consent screen and account selection
     }).then(function () {
         // Listen for sign-in state changes
         gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
         // Handle the initial sign-in state
         updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+    }).catch(function(error) {
+        console.error('Error initializing Google API client:', error);
+        // Show error to user
+        document.getElementById('uploadStatus').textContent = 'Error initializing Google Sign-In. Please try again.';
+        document.getElementById('uploadStatus').classList.add('error');
     });
 }
 
@@ -78,7 +84,16 @@ function updateSigninStatus(isSignedIn) {
 
 // Handle sign-in
 function handleSignIn() {
-    gapi.auth2.getAuthInstance().signIn();
+    const auth2 = gapi.auth2.getAuthInstance();
+    auth2.signIn({
+        prompt: 'select_account consent'
+    }).then(function() {
+        console.log('Sign-in successful');
+    }).catch(function(error) {
+        console.error('Sign-in error:', error);
+        document.getElementById('uploadStatus').textContent = 'Sign-in failed. Please try again.';
+        document.getElementById('uploadStatus').classList.add('error');
+    });
 }
 
 // Handle sign-out
