@@ -9,6 +9,12 @@
         .gradient-bg {
             background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
         }
+        .error-message {
+            display: none;
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
@@ -31,6 +37,10 @@
                     <input type="password" id="password" name="password" required
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
+
+                <div id="errorMessage" class="error-message text-center">
+                    Invalid username or password
+                </div>
                 
                 <div>
                     <button type="submit"
@@ -47,11 +57,28 @@
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
             
+            // Check credentials
             if (username === 'kanimaa' && password === 'suryaa') {
+                // Store login state
+                sessionStorage.setItem('isLoggedIn', 'true');
+                // Redirect to admin dashboard
                 window.location.href = '/admin-dashboard';
             } else {
-                alert('Invalid credentials');
+                // Show error message
+                errorMessage.style.display = 'block';
+                // Clear password field
+                document.getElementById('password').value = '';
+                // Focus on username field
+                document.getElementById('username').focus();
+            }
+        });
+
+        // Check if user is already logged in
+        window.addEventListener('load', function() {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                window.location.href = '/admin-dashboard';
             }
         });
     </script>

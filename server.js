@@ -10,6 +10,16 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
+// Authentication middleware
+const isAuthenticated = (req, res, next) => {
+    const isLoggedIn = req.headers.cookie?.includes('isLoggedIn=true');
+    if (isLoggedIn) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+};
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -60,7 +70,8 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-app.get('/admin-dashboard', (req, res) => {
+// Protected route - Admin Dashboard
+app.get('/admin-dashboard', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
 });
 
@@ -98,11 +109,12 @@ app.post('/submit-form', upload.single('file'), (req, res) => {
     }
 });
 
-app.get('/entries', (req, res) => {
+// Protected API endpoints
+app.get('/entries', isAuthenticated, (req, res) => {
     res.json(submissions);
 });
 
-app.get('/download/:filename', (req, res) => {
+app.get('/download/:filename', isAuthenticated, (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(__dirname, 'uploads', filename);
     
@@ -116,7 +128,7 @@ app.get('/download/:filename', (req, res) => {
     }
 });
 
-app.get('/export-xlsx', (req, res) => {
+app.get('/export-xlsx', isAuthenticated, (req, res) => {
     try {
         // Create worksheet
         const worksheet = XLSX.utils.json_to_sheet(submissions.map(sub => ({
@@ -153,6 +165,12 @@ app.get('/export-xlsx', (req, res) => {
             message: 'Error generating Excel file' 
         });
     }
+});
+
+// Logout endpoint
+app.get('/logout', (req, res) => {
+    res.clearCookie('isLoggedIn');
+    res.redirect('/login');
 });
 
 // Start server

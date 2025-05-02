@@ -3,47 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SKETCH 2 WEEK ASSESSMENT - Admin Dashboard</title>
+    <title>Admin Dashboard - SKETCH 2 WEEK ASSESSMENT</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="max-w-7xl mx-auto p-6">
+    <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-4xl font-bold text-indigo-600 mb-2">SKETCH</h1>
-                <p class="text-xl text-gray-600">2 WEEK ASSESSMENT</p>
-            </div>
-            <button onclick="downloadExcel()"
-                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                Download Excel
+            <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
             </button>
         </div>
 
-        <div class="bg-white rounded-lg shadow-xl p-8">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-700">Submissions</h2>
+                <button onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-file-excel mr-2"></i>Export to Excel
+                </button>
+            </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-gray-100">
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Register Number</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Birth</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Register No</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Domain</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Based on Domain</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Chosen</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted At</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="submissionsTable" class="bg-white divide-y divide-gray-200">
-                        <!-- Table rows will be populated dynamically -->
+                    <tbody id="submissionsTable" class="divide-y divide-gray-200">
+                        <!-- Submissions will be loaded here -->
                     </tbody>
                 </table>
             </div>
@@ -51,54 +44,62 @@
     </div>
 
     <script>
-        // Fetch submissions on page load
-        fetchSubmissions();
+        // Check authentication on page load
+        window.onload = function() {
+            if (!document.cookie.includes('isLoggedIn=true')) {
+                window.location.href = '/login';
+            }
+            loadSubmissions();
+        };
 
-        function fetchSubmissions() {
-            fetch('/api/submissions')
+        function logout() {
+            fetch('/logout')
+                .then(() => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Error logging out:', error);
+                });
+        }
+
+        function loadSubmissions() {
+            fetch('/entries')
                 .then(response => response.json())
-                .then(data => {
+                .then(submissions => {
                     const tableBody = document.getElementById('submissionsTable');
                     tableBody.innerHTML = '';
 
-                    data.forEach(submission => {
+                    submissions.forEach(submission => {
                         const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50';
                         row.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.name}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.registerNumber}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.dob}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.year}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.department}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.section}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.currentDomain}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.taskBasedOnDomain}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.taskChosen}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <a href="/download/${submission.fileId}" class="text-indigo-600 hover:text-indigo-900">
-                                    Download
-                                </a>
+                            <td class="px-6 py-4 whitespace-nowrap">${submission.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${submission.regNo}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${submission.department}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${submission.task}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${new Date(submission.timestamp).toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                ${submission.uploadedFile ? 
+                                    `<button onclick="downloadFile('${submission.uploadedFile}')" class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-download"></i> Download
+                                    </button>` : 
+                                    'No file uploaded'}
                             </td>
                         `;
                         tableBody.appendChild(row);
                     });
                 })
                 .catch(error => {
-                    console.error('Error fetching submissions:', error);
+                    console.error('Error loading submissions:', error);
                 });
         }
 
-        function downloadExcel() {
-            fetch('/api/submissions')
-                .then(response => response.json())
-                .then(data => {
-                    const worksheet = XLSX.utils.json_to_sheet(data);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
-                    XLSX.writeFile(workbook, "sketch_submissions.xlsx");
-                })
-                .catch(error => {
-                    console.error('Error downloading Excel:', error);
-                });
+        function downloadFile(filename) {
+            window.location.href = `/download/${filename}`;
+        }
+
+        function exportToExcel() {
+            window.location.href = '/export-xlsx';
         }
     </script>
 </body>
