@@ -26,16 +26,6 @@ const domainTasks = {
     ]
 };
 
-// Google Drive API configuration
-const GOOGLE_DRIVE_FOLDER_ID = '1fArZFyyV3YluE7B2sQOSm_UBMYzCwUY-';
-const CLIENT_ID = '85016507836-ga96s2pstsfrjugr31fgsjdeii7aemd4.apps.googleusercontent.com';
-const API_KEY = 'AIzaSyCdQDwoCUAhq-AmXjihZGMioupYfVVzJvA';
-const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-
-// Update the redirect URI to use the Vercel deployment URL
-const REDIRECT_URI = 'https://sketch-responses.vercel.app';
-
 // Get DOM elements
 const taskBasedOnDomain = document.getElementById('taskBasedOnDomain');
 const taskChosen = document.getElementById('taskChosen');
@@ -43,73 +33,6 @@ const form = document.getElementById('registrationForm');
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const uploadStatus = document.getElementById('uploadStatus');
-
-// Initialize the Google API client
-function initClient() {
-    gapi.load('client:auth2', function() {
-        gapi.client.init({
-            apiKey: API_KEY,
-            clientId: CLIENT_ID,
-            discoveryDocs: [DISCOVERY_DOC],
-            scope: SCOPES,
-            redirect_uri: REDIRECT_URI,
-            prompt: 'select_account'  // Simplified prompt for better UX
-        }).then(function() {
-            // Listen for sign-in state changes
-            gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-            // Handle the initial sign-in state
-            updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-        }).catch(function(error) {
-            console.error('Error initializing Google API client:', error);
-            document.getElementById('uploadStatus').textContent = 'Error initializing Google Sign-In. Please try again.';
-            document.getElementById('uploadStatus').classList.add('error');
-        });
-    });
-}
-
-// Load the Google API client
-function loadGoogleApi() {
-    gapi.load('client:auth2', initClient);
-}
-
-// Update sign-in status
-function updateSigninStatus(isSignedIn) {
-    if (isSignedIn) {
-        document.getElementById('dropZone').classList.remove('disabled');
-        document.getElementById('uploadStatus').textContent = 'You are signed in. You can now upload your file.';
-        document.getElementById('uploadStatus').classList.add('success');
-    } else {
-        document.getElementById('dropZone').classList.add('disabled');
-        document.getElementById('uploadStatus').textContent = 'Please sign in to upload files';
-        document.getElementById('uploadStatus').classList.remove('success', 'error');
-    }
-}
-
-// Handle sign-in
-function handleSignIn() {
-    const auth2 = gapi.auth2.getAuthInstance();
-    const options = {
-        prompt: 'select_account',
-        scope: SCOPES
-    };
-    
-    auth2.signIn(options).then(function() {
-        console.log('Sign-in successful');
-        document.getElementById('uploadStatus').textContent = 'Successfully signed in! You can now upload your file.';
-        document.getElementById('uploadStatus').classList.add('success');
-        // Enable the upload functionality
-        document.getElementById('dropZone').classList.remove('disabled');
-    }).catch(function(error) {
-        console.error('Sign-in error:', error);
-        document.getElementById('uploadStatus').textContent = 'Sign-in failed. Please try again.';
-        document.getElementById('uploadStatus').classList.add('error');
-    });
-}
-
-// Handle sign-out
-function handleSignOut() {
-    gapi.auth2.getAuthInstance().signOut();
-}
 
 // Update task options when domain is selected
 taskBasedOnDomain.addEventListener('change', function() {
@@ -153,34 +76,29 @@ function handleFiles(files) {
     if (files.length > 0) {
         const file = files[0];
         uploadStatus.textContent = 'Uploading...';
-        uploadToGoogleDrive(file);
+        uploadFile(file);
     }
 }
 
-// Modified upload function to use OAuth 2.0
-async function uploadToGoogleDrive(file) {
+// File upload function
+async function uploadFile(file) {
     try {
-        const metadata = {
-            name: file.name,
-            mimeType: file.type,
-            parents: [GOOGLE_DRIVE_FOLDER_ID]
-        };
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileName', file.name);
+        formData.append('fileType', file.type);
 
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', file);
-
-        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        const response = await fetch('/upload', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token}`
-            },
-            body: form
+            body: formData
         });
 
         if (response.ok) {
+            const result = await response.json();
             uploadStatus.textContent = 'File uploaded successfully!';
             uploadStatus.classList.add('success');
+            // Store the file ID for form submission
+            document.getElementById('fileId').value = result.fileId;
         } else {
             throw new Error('Upload failed');
         }
@@ -219,17 +137,21 @@ form.addEventListener('submit', async function(e) {
     
     // Collect form data
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
     
     try {
-        // You can handle the form data here
-        console.log('Form submitted:', data);
-        
-        // Show success message
-        alert('Form submitted successfully!');
-        form.reset();
-        uploadStatus.textContent = '';
-        uploadStatus.classList.remove('success', 'error');
+        const response = await fetch('/submit', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            alert('Form submitted successfully!');
+            form.reset();
+            uploadStatus.textContent = '';
+            uploadStatus.classList.remove('success', 'error');
+        } else {
+            throw new Error('Submission failed');
+        }
     } catch (error) {
         console.error('Submission error:', error);
         alert('An error occurred. Please try again.');

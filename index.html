@@ -108,16 +108,15 @@
             </div>
 
             <div class="form-group">
-                <label>Upload Task File:</label>
-                <div id="dropZone" class="drop-zone disabled">
-                    <input type="file" id="fileInput" class="file-input" accept="*/*" disabled>
-                    <div class="drop-zone-content">
-                        <p>Please sign in to upload files</p>
-                        <p>or</p>
-                        <button type="button" class="browse-btn" disabled>Browse Files</button>
-                    </div>
+                <label for="fileInput">Upload Task File:</label>
+                <div id="dropZone" class="drop-zone">
+                    <input type="file" id="fileInput" accept="*/*" style="display: none;">
+                    <p>Drag and drop your file here</p>
+                    <p>or</p>
+                    <button type="button" onclick="document.getElementById('fileInput').click()">Browse Files</button>
                 </div>
-                <div id="uploadStatus" class="upload-status"></div>
+                <div id="uploadStatus"></div>
+                <input type="hidden" id="fileId" name="fileId">
             </div>
 
             <button type="submit" class="submit-btn">Submit</button>
