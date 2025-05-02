@@ -28,8 +28,13 @@ const domainTasks = {
 
 // Google Drive API configuration
 const GOOGLE_DRIVE_FOLDER_ID = '1fArZFyyV3YluE7B2sQOSm_UBMYzCwUY-';
-const CLIENT_ID = 'YOUR_CLIENT_ID'; // Replace with your OAuth 2.0 Client ID
+const CLIENT_ID = '85016507836-ga96s2pstsfrjugr31fgsjdeii7aemd4.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyCdQDwoCUAhq-AmXjihZGMioupYfVVzJvA';
+const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+// Update the redirect URI to use the Vercel deployment URL
+const REDIRECT_URI = 'https://sketch-responses.vercel.app';
 
 // Get DOM elements
 const taskBasedOnDomain = document.getElementById('taskBasedOnDomain');
@@ -42,11 +47,12 @@ const uploadStatus = document.getElementById('uploadStatus');
 // Initialize the Google API client
 function initClient() {
     gapi.client.init({
-        apiKey: 'AIzaSyCdQDwoCUAhq-AmXjihZGMioupYfVVzJvA',
+        apiKey: API_KEY,
         clientId: CLIENT_ID,
+        discoveryDocs: [DISCOVERY_DOC],
         scope: SCOPES,
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-    }).then(function() {
+        redirect_uri: REDIRECT_URI
+    }).then(function () {
         // Listen for sign-in state changes
         gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
         // Handle the initial sign-in state
