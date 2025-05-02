@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration Form</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        // Load the Google API client when the page loads
+        window.onload = function() {
+            loadGoogleApi();
+        };
+    </script>
+</head>
+<body>
+    <div class="container" data-theme="blue">
+        <div class="theme-switcher">
+            <button onclick="changeTheme('blue')" class="theme-btn" style="background-color: #4169e1;"></button>
+            <button onclick="changeTheme('green')" class="theme-btn" style="background-color: #66B95C;"></button>
+            <button onclick="changeTheme('brown')" class="theme-btn" style="background-color: #ff9800;"></button>
+            <button onclick="changeTheme('pink')" class="theme-btn" style="background-color: #ff5e94;"></button>
+            <button onclick="changeTheme('orange')" class="theme-btn" style="background-color: #fa5b0f;"></button>
+            <button onclick="changeTheme('purple')" class="theme-btn" style="background-color: #9200ee;"></button>
+            <button onclick="changeTheme('sky')" class="theme-btn" style="background-color: #00D4BD;"></button>
+            <button onclick="changeTheme('cadetBlue')" class="theme-btn" style="background-color: #5e9e9f;"></button>
+            <button onclick="changeTheme('crimson')" class="theme-btn" style="background-color: #e54b4b;"></button>
+            <button onclick="changeTheme('olive')" class="theme-btn" style="background-color: #666d41;"></button>
+            <button onclick="changeTheme('red')" class="theme-btn" style="background-color: #fe0000;"></button>
+        </div>
+
+        <h1>Student Registration Form</h1>
+        
+        <!-- Google Sign-in Button -->
+        <div class="auth-buttons">
+            <button id="signin-button" onclick="handleSignIn()" class="auth-btn signin">Sign in with Google</button>
+            <button id="signout-button" onclick="handleSignOut()" class="auth-btn signout" style="display: none;">Sign out</button>
+        </div>
+
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="registerNumber">Register Number:</label>
+                <input type="text" id="registerNumber" name="registerNumber" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" name="dob" required>
+            </div>
+
+            <div class="form-group">
+                <label for="year">Year:</label>
+                <select id="year" name="year" required>
+                    <option value="">Select Year</option>
+                    <option value="1st">1st Year</option>
+                    <option value="2nd">2nd Year</option>
+                    <option value="3rd">3rd Year</option>
+                    <option value="4th">4th Year</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department:</label>
+                <input type="text" id="department" name="department" required>
+            </div>
+
+            <div class="form-group">
+                <label for="section">Section:</label>
+                <input type="text" id="section" name="section" required>
+            </div>
+
+            <div class="form-group">
+                <label for="currentDomain">Current Domain:</label>
+                <select id="currentDomain" name="currentDomain" required>
+                    <option value="">Select Domain</option>
+                    <option value="O&PR">O&PR</option>
+                    <option value="MEDIA">MEDIA</option>
+                    <option value="DESIGN">DESIGN</option>
+                    <option value="MARKETING">MARKETING</option>
+                    <option value="CONTENT">CONTENT</option>
+                    <option value="R&D">R&D</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="taskBasedOnDomain">Task Based on Domain:</label>
+                <select id="taskBasedOnDomain" name="taskBasedOnDomain" required>
+                    <option value="">Select Domain</option>
+                    <option value="O&PR">O&PR</option>
+                    <option value="MEDIA">MEDIA</option>
+                    <option value="DESIGN">DESIGN</option>
+                    <option value="MARKETING">MARKETING</option>
+                    <option value="CONTENT">CONTENT</option>
+                    <option value="R&D">R&D</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="taskChosen">Task Chosen:</label>
+                <select id="taskChosen" name="taskChosen" required>
+                    <option value="">Select Task</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Task File:</label>
+                <div id="dropZone" class="drop-zone disabled">
+                    <input type="file" id="fileInput" class="file-input" accept="*/*" disabled>
+                    <div class="drop-zone-content">
+                        <p>Please sign in to upload files</p>
+                        <p>or</p>
+                        <button type="button" class="browse-btn" disabled>Browse Files</button>
+                    </div>
+                </div>
+                <div id="uploadStatus" class="upload-status"></div>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit</button>
+        </form>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        function changeTheme(theme) {
+            document.querySelector('.container').setAttribute('data-theme', theme);
+        }
+    </script>
+</body>
+</html> 
