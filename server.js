@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 // Initialize database with error handling
 initDatabase()
@@ -109,11 +109,6 @@ app.get('/api/export-xlsx', async (req, res) => {
     }
 });
 
-// Catch-all route for static files
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', req.path));
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
@@ -121,10 +116,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}`);
-    });
-}
-
-module.exports = app; 
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+}); 
