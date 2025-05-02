@@ -216,16 +216,20 @@
 
             uploadStatus.innerHTML = '<p class="text-blue-600">Uploading...</p>';
 
-            fetch('/upload', {
+            fetch('/submit-form', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                uploadStatus.innerHTML = '<p class="text-green-600">File uploaded successfully!</p>';
+                if (data.success) {
+                    uploadStatus.innerHTML = '<p class="text-green-600">File uploaded successfully!</p>';
+                } else {
+                    throw new Error(data.message || 'Upload failed');
+                }
             })
             .catch(error => {
-                uploadStatus.innerHTML = '<p class="text-red-600">Error uploading file</p>';
+                uploadStatus.innerHTML = `<p class="text-red-600">Error uploading file: ${error.message}</p>`;
                 console.error('Error:', error);
             });
         }
@@ -235,17 +239,22 @@
             e.preventDefault();
             const formData = new FormData(this);
             
-            fetch('/submit', {
+            fetch('/submit-form', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                alert('Form submitted successfully!');
-                this.reset();
+                if (data.success) {
+                    alert('Form submitted successfully!');
+                    this.reset();
+                    uploadStatus.innerHTML = '';
+                } else {
+                    throw new Error(data.message || 'Submission failed');
+                }
             })
             .catch(error => {
-                alert('Error submitting form');
+                alert(`Error submitting form: ${error.message}`);
                 console.error('Error:', error);
             });
         });
