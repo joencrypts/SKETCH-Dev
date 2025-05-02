@@ -46,23 +46,24 @@ const uploadStatus = document.getElementById('uploadStatus');
 
 // Initialize the Google API client
 function initClient() {
-    gapi.client.init({
-        apiKey: API_KEY,
-        clientId: CLIENT_ID,
-        discoveryDocs: [DISCOVERY_DOC],
-        scope: SCOPES,
-        redirect_uri: REDIRECT_URI,
-        prompt: 'select_account consent'  // Force consent screen and account selection
-    }).then(function () {
-        // Listen for sign-in state changes
-        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-        // Handle the initial sign-in state
-        updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-    }).catch(function(error) {
-        console.error('Error initializing Google API client:', error);
-        // Show error to user
-        document.getElementById('uploadStatus').textContent = 'Error initializing Google Sign-In. Please try again.';
-        document.getElementById('uploadStatus').classList.add('error');
+    gapi.load('client:auth2', function() {
+        gapi.client.init({
+            apiKey: API_KEY,
+            clientId: CLIENT_ID,
+            discoveryDocs: [DISCOVERY_DOC],
+            scope: SCOPES,
+            redirect_uri: REDIRECT_URI,
+            prompt: 'select_account'  // Simplified prompt for better UX
+        }).then(function() {
+            // Listen for sign-in state changes
+            gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+            // Handle the initial sign-in state
+            updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+        }).catch(function(error) {
+            console.error('Error initializing Google API client:', error);
+            document.getElementById('uploadStatus').textContent = 'Error initializing Google Sign-In. Please try again.';
+            document.getElementById('uploadStatus').classList.add('error');
+        });
     });
 }
 
@@ -71,24 +72,33 @@ function loadGoogleApi() {
     gapi.load('client:auth2', initClient);
 }
 
-// Update UI based on sign-in status
+// Update sign-in status
 function updateSigninStatus(isSignedIn) {
     if (isSignedIn) {
-        // Enable upload functionality
         document.getElementById('dropZone').classList.remove('disabled');
+        document.getElementById('uploadStatus').textContent = 'You are signed in. You can now upload your file.';
+        document.getElementById('uploadStatus').classList.add('success');
     } else {
-        // Disable upload functionality
         document.getElementById('dropZone').classList.add('disabled');
+        document.getElementById('uploadStatus').textContent = 'Please sign in to upload files';
+        document.getElementById('uploadStatus').classList.remove('success', 'error');
     }
 }
 
 // Handle sign-in
 function handleSignIn() {
     const auth2 = gapi.auth2.getAuthInstance();
-    auth2.signIn({
-        prompt: 'select_account consent'
-    }).then(function() {
+    const options = {
+        prompt: 'select_account',
+        scope: SCOPES
+    };
+    
+    auth2.signIn(options).then(function() {
         console.log('Sign-in successful');
+        document.getElementById('uploadStatus').textContent = 'Successfully signed in! You can now upload your file.';
+        document.getElementById('uploadStatus').classList.add('success');
+        // Enable the upload functionality
+        document.getElementById('dropZone').classList.remove('disabled');
     }).catch(function(error) {
         console.error('Sign-in error:', error);
         document.getElementById('uploadStatus').textContent = 'Sign-in failed. Please try again.';
