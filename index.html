@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Registration Form</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script>
-        // Load the Google API client when the page loads
-        window.onload = function() {
-            loadGoogleApi();
-        };
-    </script>
 </head>
 <body>
     <div class="container" data-theme="blue">
@@ -30,12 +23,6 @@
         </div>
 
         <h1>Student Registration Form</h1>
-        
-        <!-- Google Sign-in Button -->
-        <div class="auth-buttons">
-            <button id="signin-button" onclick="handleSignIn()" class="auth-btn signin">Sign in with Google</button>
-            <button id="signout-button" onclick="handleSignOut()" class="auth-btn signout" style="display: none;">Sign out</button>
-        </div>
 
         <form id="registrationForm">
             <div class="form-group">
