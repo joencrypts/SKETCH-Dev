@@ -61,8 +61,8 @@
             
             // Check credentials
             if (username === 'kanimaa' && password === 'suryaa') {
-                // Store login state
-                sessionStorage.setItem('isLoggedIn', 'true');
+                // Set cookie for authentication
+                document.cookie = "isLoggedIn=true; path=/";
                 // Redirect to admin dashboard
                 window.location.href = '/admin-dashboard';
             } else {
@@ -77,7 +77,7 @@
 
         // Check if user is already logged in
         window.addEventListener('load', function() {
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            if (document.cookie.includes('isLoggedIn=true')) {
                 window.location.href = '/admin-dashboard';
             }
         });

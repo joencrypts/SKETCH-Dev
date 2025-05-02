@@ -3,16 +3,18 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const XLSX = require('xlsx');
+const cookieParser = require('cookie-parser');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
 app.use(express.static('public'));
+app.use(cookieParser());
 
 // Authentication middleware
 const isAuthenticated = (req, res, next) => {
-    const isLoggedIn = req.headers.cookie?.includes('isLoggedIn=true');
+    const isLoggedIn = req.cookies?.isLoggedIn === 'true';
     if (isLoggedIn) {
         next();
     } else {
