@@ -25,8 +25,9 @@
                 <label for="dob">Date of Birth:</label>
                 <input type="date" id="dob" name="dob" required 
                        pattern="\d{4}-\d{2}-\d{2}"
-                       title="Please enter a valid date">
-                <small class="help-text">Format: DD/MM/YYYY</small>
+                       title="Please enter a valid date in MM/DD/YYYY format"
+                       onchange="formatDate(this)">
+                <small class="help-text">Format: MM/DD/YYYY</small>
             </div>
             <div class="form-group">
                 <label for="year">Year:</label>
@@ -170,6 +171,17 @@
                 alert('Error submitting task. Please try again.');
             }
         });
+
+        // Function to format date to MM/DD/YYYY
+        function formatDate(input) {
+            if (input.value) {
+                const date = new Date(input.value);
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const year = date.getFullYear();
+                input.value = `${year}-${month}-${day}`;
+            }
+        }
     </script>
 </body>
 </html> 
