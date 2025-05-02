@@ -2,9 +2,15 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const XLSX = require('xlsx');
 const app = express();
+const port = process.env.PORT || 3000;
 
-// Configure multer for file upload
+// Middleware
+app.use(express.json());
+app.use(express.static('public'));
+
+// Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = 'uploads';
@@ -14,6 +20,7 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
+        // Create unique filename with original extension
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
@@ -21,28 +28,134 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Serve static files
-app.use(express.static('public'));
+// Data storage (in-memory array)
+let submissions = [];
 
-// Handle file upload
-app.post('/upload', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+// Load existing data from JSON file if it exists
+const dataFile = 'submissions.json';
+try {
+    if (fs.existsSync(dataFile)) {
+        const data = fs.readFileSync(dataFile, 'utf8');
+        submissions = JSON.parse(data);
     }
-    res.json({ 
-        fileId: req.file.filename,
-        message: 'File uploaded successfully' 
-    });
+} catch (error) {
+    console.error('Error loading submissions:', error);
+}
+
+// Save submissions to JSON file
+function saveSubmissions() {
+    try {
+        fs.writeFileSync(dataFile, JSON.stringify(submissions, null, 2));
+    } catch (error) {
+        console.error('Error saving submissions:', error);
+    }
+}
+
+// Routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Handle form submission
-app.post('/submit', express.json(), (req, res) => {
-    // Here you can handle the form data and file ID
-    // For example, save to a database
-    res.json({ message: 'Form submitted successfully' });
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.get('/admin-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+});
+
+// API endpoints
+app.post('/submit-form', upload.single('file'), (req, res) => {
+    try {
+        const submission = {
+            name: req.body.name,
+            regNo: req.body.registerNumber,
+            dob: req.body.dob,
+            year: req.body.year,
+            department: req.body.department,
+            section: req.body.section,
+            currentDomain: req.body.currentDomain,
+            taskDomain: req.body.taskBasedOnDomain,
+            task: req.body.taskChosen,
+            uploadedFile: req.file ? req.file.filename : null,
+            timestamp: new Date().toISOString()
+        };
+
+        submissions.push(submission);
+        saveSubmissions();
+
+        res.json({ 
+            success: true, 
+            message: 'Form submitted successfully',
+            submission 
+        });
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error submitting form' 
+        });
+    }
+});
+
+app.get('/entries', (req, res) => {
+    res.json(submissions);
+});
+
+app.get('/download/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, 'uploads', filename);
+    
+    if (fs.existsSync(filePath)) {
+        res.download(filePath);
+    } else {
+        res.status(404).json({ 
+            success: false, 
+            message: 'File not found' 
+        });
+    }
+});
+
+app.get('/export-xlsx', (req, res) => {
+    try {
+        // Create worksheet
+        const worksheet = XLSX.utils.json_to_sheet(submissions.map(sub => ({
+            Name: sub.name,
+            'Register Number': sub.regNo,
+            'Date of Birth': sub.dob,
+            Year: sub.year,
+            Department: sub.department,
+            Section: sub.section,
+            'Current Domain': sub.currentDomain,
+            'Task Domain': sub.taskDomain,
+            Task: sub.task,
+            'Uploaded File': sub.uploadedFile,
+            'Submitted At': new Date(sub.timestamp).toLocaleString()
+        })));
+
+        // Create workbook
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
+
+        // Generate buffer
+        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+        // Set headers
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=submissions.xlsx');
+
+        // Send file
+        res.send(excelBuffer);
+    } catch (error) {
+        console.error('Error generating Excel file:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error generating Excel file' 
+        });
+    }
+});
+
+// Start server
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
 }); 

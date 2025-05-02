@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKETCH 2 WEEK ASSESSMENT - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-indigo-600 mb-2">SKETCH</h1>
+                <p class="text-xl text-gray-600">2 WEEK ASSESSMENT</p>
+            </div>
+            <button onclick="downloadExcel()"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Download Excel
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-xl p-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Register Number</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Birth</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Domain</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Based on Domain</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Chosen</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissionsTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Table rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch submissions on page load
+        fetchSubmissions();
+
+        function fetchSubmissions() {
+            fetch('/api/submissions')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('submissionsTable');
+                    tableBody.innerHTML = '';
+
+                    data.forEach(submission => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.registerNumber}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.dob}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.year}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.department}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.section}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.currentDomain}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.taskBasedOnDomain}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${submission.taskChosen}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <a href="/download/${submission.fileId}" class="text-indigo-600 hover:text-indigo-900">
+                                    Download
+                                </a>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching submissions:', error);
+                });
+        }
+
+        function downloadExcel() {
+            fetch('/api/submissions')
+                .then(response => response.json())
+                .then(data => {
+                    const worksheet = XLSX.utils.json_to_sheet(data);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
+                    XLSX.writeFile(workbook, "sketch_submissions.xlsx");
+                })
+                .catch(error => {
+                    console.error('Error downloading Excel:', error);
+                });
+        }
+    </script>
+</body>
+</html> 
