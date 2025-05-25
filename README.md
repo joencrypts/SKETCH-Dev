@@ -24,7 +24,7 @@ A modern, responsive student registration form with dynamic task selection and G
 
 1. Clone the repository:
 ```bash
-git clone [your-repository-url]
+git clone (https://github.com/joencrypts/SKETCH-Dev)
 ```
 
 2. Configure Google Drive API:
@@ -43,9 +43,6 @@ git clone [your-repository-url]
 4. Upload your task file
 5. Submit the form
 
-## Deployment
-
-This project is deployed on Vercel. Visit the live site at: [your-vercel-url]
 
 ## Contributing
 
@@ -57,4 +54,4 @@ This project is deployed on Vercel. Visit the live site at: [your-vercel-url]
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License 
